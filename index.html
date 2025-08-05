@@ -8,8 +8,6 @@
   
   <!-- Prism.js CSS for syntax highlighting -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
   
   <style>
     body {
@@ -87,9 +85,6 @@
     }
     .status-section h3 {
       margin-top: 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
     .test-button {
       background-color: #28a745;
@@ -103,22 +98,17 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: #2d3748;
     }
     .code-header {
-      background: linear-gradient(135deg, #2d3748, #4a5568);
+      background: #2d3748;
       color: white;
       padding: 12px 16px;
       font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: space-between;
-    }
-    .code-language {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: normal;
+      border-bottom: 1px solid #4a5568;
     }
     .copy-button {
       background: rgba(255, 255, 255, 0.1);
@@ -135,54 +125,22 @@
     .copy-button:hover {
       background: rgba(255, 255, 255, 0.2);
     }
-    .copy-button:active {
-      transform: scale(0.95);
-    }
     .code-wrapper {
       position: relative;
       max-height: 400px;
       overflow-y: auto;
     }
-    /* Custom Prism styling */
     .code-wrapper pre {
       margin: 0 !important;
       border-radius: 0 !important;
       background: #2d3748 !important;
       font-size: 14px;
       line-height: 1.5;
+      padding: 20px;
     }
     .code-wrapper code {
-      font-family: 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
-    }
-    /* Line numbers styling */
-    .line-numbers .line-numbers-rows {
-      border-right: 1px solid #4a5568 !important;
-      background: #2d3748 !important;
-    }
-    /* Toolbar styling */
-    .code-toolbar {
-      position: relative;
-    }
-    .code-toolbar > .toolbar {
-      position: absolute;
-      top: 0.3em;
-      right: 0.2em;
-      transition: opacity 0.3s ease-in-out;
-      opacity: 0;
-    }
-    .code-toolbar:hover > .toolbar {
-      opacity: 1;
-    }
-    .debug-info {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      padding: 15px;
-      border-radius: 6px;
-      font-family: 'Monaco', monospace;
-      font-size: 12px;
-      max-height: 250px;
-      overflow-y: auto;
-      display: none;
+      font-family: 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+      color: #e2e8f0;
     }
     .form-container {
       background: white;
@@ -200,16 +158,25 @@
       border: 2px dashed #dee2e6;
       border-radius: 8px;
     }
-    @media (max-width: 600px) {
-      body {
-        margin: 20px;
-        padding: 15px;
-      }
-      .code-header {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
-      }
+    .debug-info {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Monaco', monospace;
+      font-size: 12px;
+      max-height: 250px;
+      overflow-y: auto;
+      display: none;
+      white-space: pre-wrap;
+    }
+    .error-details {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+      color: #856404;
     }
   </style>
 </head>
@@ -218,9 +185,7 @@
   
   <!-- Status Section -->
   <div class="status-section">
-    <h3>
-      <span>✅ EmailJS Configuration Status</span>
-    </h3>
+    <h3>✅ EmailJS Configuration Status</h3>
     <p><strong>Public Key:</strong> gSzAYtERZ6iPLH_OV</p>
     <p><strong>Service ID:</strong> service_indlo7r</p>
     <p><strong>Template ID:</strong> template_2j9tqk7</p>
@@ -241,13 +206,22 @@
   </div>
   
   <div id="feedback" class="feedback"></div>
+  <div id="errorDetails" class="error-details" style="display: none;"></div>
   
   <h3>📄 Generated Code:</h3>
-  <div id="codeContainer" class="code-container">
-    <div class="empty-state" id="emptyState">
-      <div>🎯 Your beautifully highlighted code will appear here...</div>
-      <div style="margin-top: 10px; font-size: 14px;">Click "Generate Code & Send Email" to get started!</div>
+  <div id="codeContainer" class="code-container" style="display: none;">
+    <div class="code-header">
+      <span>📄 Generated JavaScript Code</span>
+      <button class="copy-button" onclick="copyToClipboard()">📋 Copy</button>
     </div>
+    <div class="code-wrapper">
+      <pre><code id="generatedCode"></code></pre>
+    </div>
+  </div>
+  
+  <div class="empty-state" id="emptyState">
+    <div>🎯 Your beautifully highlighted code will appear here...</div>
+    <div style="margin-top: 10px; font-size: 14px;">Click "Generate Code & Send Email" to get started!</div>
   </div>
   
   <h3>🐛 Debug Information:</h3>
@@ -257,17 +231,20 @@
   <!-- Prism.js JavaScript for syntax highlighting -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
 
   <script type="module">
-    import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
+    // Import EmailJS
+    let emailjs;
+    try {
+      const module = await import('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm');
+      emailjs = module.default;
+      debugLog('EmailJS module loaded successfully');
+    } catch (error) {
+      debugLog('Failed to load EmailJS module:', error);
+      showErrorDetails('Failed to load EmailJS library. Please check your internet connection.');
+    }
     
-    // Your EmailJS Configuration - Automatically set
+    // Your EmailJS Configuration
     const EMAILJS_CONFIG = {
       publicKey: 'gSzAYtERZ6iPLH_OV',
       serviceId: 'service_indlo7r',
@@ -292,10 +269,21 @@
       console.log(message, data);
     }
     
-    // Initialize EmailJS on page load
+    // Show error details
+    function showErrorDetails(message) {
+      const errorDetails = document.getElementById('errorDetails');
+      errorDetails.textContent = message;
+      errorDetails.style.display = 'block';
+    }
+    
+    // Initialize EmailJS
     async function initializeEmailJS() {
       try {
-        debugLog('Initializing EmailJS with configuration:', EMAILJS_CONFIG);
+        if (!emailjs) {
+          throw new Error('EmailJS not loaded');
+        }
+        
+        debugLog('Initializing EmailJS with public key:', EMAILJS_CONFIG.publicKey);
         emailjs.init(EMAILJS_CONFIG.publicKey);
         isEmailJSInitialized = true;
         
@@ -304,48 +292,32 @@
         
       } catch (error) {
         debugLog('EmailJS initialization failed:', error);
-        document.getElementById('initStatus').innerHTML = '❌ EmailJS initialization failed';
+        document.getElementById('initStatus').innerHTML = '❌ EmailJS initialization failed: ' + error.message;
+        showErrorDetails('EmailJS initialization failed: ' + error.message);
       }
     }
     
     // Function to display code with syntax highlighting
-    function displayCode(code, language = 'javascript') {
+    function displayCode(code) {
       const container = document.getElementById('codeContainer');
       const emptyState = document.getElementById('emptyState');
+      const codeElement = document.getElementById('generatedCode');
       
-      // Hide empty state
-      if (emptyState) {
-        emptyState.style.display = 'none';
+      // Hide empty state and show code container
+      emptyState.style.display = 'none';
+      container.style.display = 'block';
+      
+      // Set code content
+      codeElement.textContent = code;
+      
+      // Apply syntax highlighting if Prism is available
+      if (typeof Prism !== 'undefined') {
+        codeElement.className = 'language-javascript';
+        Prism.highlightElement(codeElement);
+        debugLog('Syntax highlighting applied');
+      } else {
+        debugLog('Prism.js not available, showing plain text');
       }
-      
-      // Create code structure
-      const codeHtml = `
-        <div class="code-header">
-          <div>
-            <span>📄 Generated Code</span>
-            <span class="code-language">${language.toUpperCase()}</span>
-          </div>
-          <button class="copy-button" onclick="copyToClipboard()">📋 Copy</button>
-        </div>
-        <div class="code-wrapper">
-          <pre class="line-numbers"><code class="language-${language}" id="generatedCode">${escapeHtml(code)}</code></pre>
-        </div>
-      `;
-      
-      container.innerHTML = codeHtml;
-      
-      // Apply syntax highlighting
-      Prism.highlightElement(document.getElementById('generatedCode'));
-    }
-    
-    // Function to escape HTML
-    function escapeHtml(unsafe) {
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
     }
     
     // Copy to clipboard function
@@ -363,353 +335,74 @@
             copyBtn.textContent = originalText;
             copyBtn.style.background = 'rgba(255, 255, 255, 0.1)';
           }, 2000);
+          
+          debugLog('Code copied to clipboard');
         }).catch(err => {
-          console.error('Failed to copy code: ', err);
+          debugLog('Failed to copy code:', err);
+          alert('Failed to copy code. Please select and copy manually.');
         });
       }
     };
     
-    // Enhanced code generation with different languages
+    // Simple code generation
     function generateCode() {
       const codeExamples = [
-        {
-          language: 'javascript',
-          code: `// Random Number Generator with Statistics
-function generateRandomStats() {
-  const numbers = Array.from({length: 10}, () => 
-    Math.floor(Math.random() * 100) + 1
-  );
-  
-  const stats = {
-    numbers: numbers,
-    sum: numbers.reduce((a, b) => a + b, 0),
-    average: numbers.reduce((a, b) => a + b, 0) / numbers.length,
-    min: Math.min(...numbers),
-    max: Math.max(...numbers)
-  };
-  
-  console.log('Generated Numbers:', stats.numbers);
-  console.log('Statistics:', {
-    sum: stats.sum,
-    average: stats.average.toFixed(2),
-    min: stats.min,
-    max: stats.max
-  });
-  
-  return stats;
+        `// Random Number Generator
+function generateRandomNumber() {
+  return Math.floor(Math.random() * 100) + 1;
 }
 
-// Generate and display statistics
-generateRandomStats();`
-        },
-        {
-          language: 'javascript',
-          code: `// Advanced Color Palette Generator
-class ColorPalette {
-  constructor() {
-    this.colors = [];
+console.log("Random number:", generateRandomNumber());`,
+
+        `// Color Palette Generator
+const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+const randomColor = colors[Math.floor(Math.random() * colors.length)];
+console.log("Random color:", randomColor);`,
+
+        `// Simple Calculator
+class Calculator {
+  add(a, b) {
+    return a + b;
   }
   
-  generateHexColor() {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+  subtract(a, b) {
+    return a - b;
   }
   
-  generateRgbColor() {
-    const r = Math.floor(Math.random() * 256);
-    const g = Math.floor(Math.random() * 256);
-    const b = Math.floor(Math.random() * 256);
-    return \`rgb(\${r}, \${g}, \${b})\`;
+  multiply(a, b) {
+    return a * b;
   }
   
-  generatePalette(count = 5) {
-    this.colors = [];
-    for (let i = 0; i < count; i++) {
-      this.colors.push({
-        hex: this.generateHexColor(),
-        rgb: this.generateRgbColor(),
-        name: \`Color \${i + 1}\`
-      });
-    }
-    return this.colors;
-  }
-  
-  displayPalette() {
-    this.colors.forEach((color, index) => {
-      console.log(\`\${color.name}: \${color.hex} | \${color.rgb}\`);
-    });
+  divide(a, b) {
+    return b !== 0 ? a / b : "Cannot divide by zero";
   }
 }
 
-// Usage example
-const palette = new ColorPalette();
-palette.generatePalette(5);
-palette.displayPalette();`
-        },
-        {
-          language: 'javascript',
-          code: `// Smart Calculator with History
-class SmartCalculator {
-  constructor() {
-    this.history = [];
-  }
+const calc = new Calculator();
+console.log("5 + 3 =", calc.add(5, 3));`,
+
+        `// Array Utilities
+const arrayUtils = {
+  shuffle: (arr) => {
+    return arr.sort(() => Math.random() - 0.5);
+  },
   
-  calculate(operation, a, b) {
-    let result;
-    const timestamp = new Date().toLocaleString();
-    
-    switch(operation) {
-      case 'add':
-        result = a + b;
-        break;
-      case 'subtract':
-        result = a - b;
-        break;
-      case 'multiply':
-        result = a * b;
-        break;
-      case 'divide':
-        result = b !== 0 ? a / b : 'Error: Division by zero';
-        break;
-      case 'power':
-        result = Math.pow(a, b);
-        break;
-      case 'sqrt':
-        result = Math.sqrt(a);
-        break;
-      default:
-        result = 'Error: Invalid operation';
-    }
-    
-    const calculation = {
-      operation,
-      operands: operation === 'sqrt' ? [a] : [a, b],
-      result,
-      timestamp
-    };
-    
-    this.history.push(calculation);
-    return result;
-  }
+  unique: (arr) => {
+    return [...new Set(arr)];
+  },
   
-  getHistory() {
-    return this.history;
+  sum: (arr) => {
+    return arr.reduce((a, b) => a + b, 0);
   }
-  
-  clearHistory() {
-    this.history = [];
-  }
-}
+};
 
-// Example usage
-const calc = new SmartCalculator();
-console.log('Addition:', calc.calculate('add', 15, 25));
-console.log('Power:', calc.calculate('power', 2, 8));
-console.log('Square Root:', calc.calculate('sqrt', 64));
-console.log('History:', calc.getHistory());`
-        },
-        {
-          language: 'javascript',
-          code: `// Advanced API Data Fetcher with Caching
-class APIManager {
-  constructor() {
-    this.cache = new Map();
-    this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
-  }
-  
-  async fetchWithCache(url) {
-    const now = Date.now();
-    const cached = this.cache.get(url);
-    
-    // Return cached data if still valid
-    if (cached && (now - cached.timestamp) < this.cacheExpiry) {
-      console.log('Returning cached data for:', url);
-      return cached.data;
-    }
-    
-    try {
-      console.log('Fetching fresh data from:', url);
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(\`HTTP error! status: \${response.status}\`);
-      }
-      
-      const data = await response.json();
-      
-      // Cache the result
-      this.cache.set(url, {
-        data,
-        timestamp: now
-      });
-      
-      return data;
-      
-    } catch (error) {
-      console.error('Fetch error:', error.message);
-      
-      // Return cached data even if expired, as fallback
-      if (cached) {
-        console.log('Returning expired cached data as fallback');
-        return cached.data;
-      }
-      
-      throw error;
-    }
-  }
-  
-  clearCache() {
-    this.cache.clear();
-    console.log('Cache cleared');
-  }
-}
-
-// Usage example
-const api = new APIManager();
-api.fetchWithCache('https://api.github.com/users/octocat')
-  .then(data => console.log('User data:', data))
-  .catch(error => console.error('Failed to fetch:', error));`
-        },
-        {
-          language: 'typescript',
-          code: `// TypeScript Interface Example with Generic Types
-interface User<T = any> {
-  id: number;
-  name: string;
-  email: string;
-  metadata?: T;
-  createdAt: Date;
-}
-
-interface ApiResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  hasMore: boolean;
-}
-
-class UserManager<T = any> {
-  private users: User<T>[] = [];
-  
-  addUser(userData: Omit<User<T>, 'id' | 'createdAt'>): User<T> {
-    const newUser: User<T> = {
-      id: this.users.length + 1,
-      createdAt: new Date(),
-      ...userData
-    };
-    
-    this.users.push(newUser);
-    return newUser;
-  }
-  
-  getUserById(id: number): User<T> | undefined {
-    return this.users.find(user => user.id === id);
-  }
-  
-  getUsers(page: number = 1, limit: number = 10): ApiResponse<User<T>> {
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedUsers = this.users.slice(startIndex, endIndex);
-    
-    return {
-      data: paginatedUsers,
-      total: this.users.length,
-      page,
-      hasMore: endIndex < this.users.length
-    };
-  }
-}
-
-// Usage example
-const userManager = new UserManager<{role: string, preferences: any}>();
-
-userManager.addUser({
-  name: 'Alice Johnson',
-  email: 'alice@example.com',
-  metadata: {
-    role: 'admin',
-    preferences: { theme: 'dark', notifications: true }
-  }
-});
-
-console.log('Users:', userManager.getUsers(1, 5));`
-        },
-        {
-          language: 'python',
-          code: `# Python Data Analysis Example
-import random
-from datetime import datetime, timedelta
-from typing import List, Dict, Any
-
-class DataAnalyzer:
-    def __init__(self):
-        self.data = []
-    
-    def generate_sample_data(self, count: int = 100) -> List[Dict[str, Any]]:
-        """Generate sample data for analysis"""
-        categories = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports']
-        
-        for i in range(count):
-            self.data.append({
-                'id': i + 1,
-                'category': random.choice(categories),
-                'price': round(random.uniform(10, 500), 2),
-                'quantity': random.randint(1, 10),
-                'date': datetime.now() - timedelta(days=random.randint(0, 365))
-            })
-        
-        return self.data
-    
-    def analyze_by_category(self) -> Dict[str, Dict[str, float]]:
-        """Analyze data by category"""
-        analysis = {}
-        
-        for item in self.data:
-            category = item['category']
-            if category not in analysis:
-                analysis[category] = {
-                    'total_revenue': 0,
-                    'total_items': 0,
-                    'avg_price': 0
-                }
-            
-            analysis[category]['total_revenue'] += item['price'] * item['quantity']
-            analysis[category]['total_items'] += item['quantity']
-        
-        # Calculate average prices
-        for category in analysis:
-            total_revenue = analysis[category]['total_revenue']
-            total_items = analysis[category]['total_items']
-            analysis[category]['avg_price'] = round(total_revenue / total_items, 2)
-        
-        return analysis
-    
-    def get_top_categories(self, limit: int = 3) -> List[tuple]:
-        """Get top performing categories by revenue"""
-        analysis = self.analyze_by_category()
-        sorted_categories = sorted(
-            analysis.items(),
-            key=lambda x: x[1]['total_revenue'],
-            reverse=True
-        )
-        return sorted_categories[:limit]
-
-# Example usage
-analyzer = DataAnalyzer()
-analyzer.generate_sample_data(50)
-
-print("Category Analysis:")
-for category, stats in analyzer.analyze_by_category().items():
-    print(f"{category}: Revenue=${stats['total_revenue']:.2f}, "
-          f"Items={stats['total_items']}, Avg Price=${stats['avg_price']}")
-
-print("\\nTop 3 Categories:")
-for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
-    print(f"{i}. {category}: ${stats['total_revenue']:.2f}")`
-        }
+const numbers = [1, 2, 3, 4, 5, 2, 3];
+console.log("Original:", numbers);
+console.log("Unique:", arrayUtils.unique(numbers));
+console.log("Sum:", arrayUtils.sum(numbers));`
       ];
       
-      const randomExample = codeExamples[Math.floor(Math.random() * codeExamples.length)];
-      return randomExample;
+      return codeExamples[Math.floor(Math.random() * codeExamples.length)];
     }
     
     // Function to show feedback
@@ -739,6 +432,10 @@ for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
           await initializeEmailJS();
         }
         
+        if (!emailjs) {
+          throw new Error('EmailJS not available');
+        }
+        
         const testParams = {
           to_name: 'Test User',
           to_email: 'test@example.com',
@@ -756,27 +453,24 @@ for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
         );
         
         debugLog('Test email sent successfully:', response);
-        showFeedback('✅ Test email sent successfully! Check your email template configuration.', 'success');
+        showFeedback('✅ Test email sent successfully!', 'success');
         
       } catch (error) {
-        debugLog('Test email failed:', {
-          message: error.message,
-          status: error.status,
-          text: error.text
-        });
+        debugLog('Test email failed:', error);
         
         let errorMessage = 'Test failed: ';
         if (error.status === 400) {
-          errorMessage += 'Template variables mismatch. Check your EmailJS template.';
+          errorMessage += 'Bad Request - Check your template variables';
         } else if (error.status === 401) {
-          errorMessage += 'Invalid public key.';
+          errorMessage += 'Unauthorized - Check your public key';
         } else if (error.status === 404) {
-          errorMessage += 'Service or template not found.';
+          errorMessage += 'Not Found - Check your service/template IDs';
         } else {
           errorMessage += error.message || 'Unknown error';
         }
         
         showFeedback(errorMessage, 'error');
+        showErrorDetails(`Test Error Details:\nStatus: ${error.status || 'Unknown'}\nMessage: ${error.message || 'Unknown error'}\nText: ${error.text || 'No additional info'}`);
         
       } finally {
         button.disabled = false;
@@ -797,14 +491,14 @@ for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
         return;
       }
       
-      if (!isEmailJSInitialized) {
-        showFeedback('EmailJS not initialized. Please wait and try again.', 'error');
+      if (!isEmailJSInitialized || !emailjs) {
+        showFeedback('EmailJS not ready. Please wait and try again.', 'error');
         return;
       }
       
-      // Generate code
-      const codeExample = generateCode();
-      displayCode(codeExample.code, codeExample.language);
+      // Generate and display code
+      const generatedCode = generateCode();
+      displayCode(generatedCode);
       
       // Disable button and show loading state
       generateBtn.disabled = true;
@@ -817,9 +511,9 @@ for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
         const emailParams = {
           to_name: name,
           to_email: email,
-          generated_code: codeExample.code,
+          generated_code: generatedCode,
           from_name: 'Code Generator App',
-          user_message: `Hello ${name}! Here's your freshly generated ${codeExample.language.toUpperCase()} code. Happy coding! 🚀`
+          user_message: `Hello ${name}! Here's your freshly generated JavaScript code. Happy coding! 🚀`
         };
         
         debugLog('Sending email with parameters:', emailParams);
@@ -837,26 +531,23 @@ for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
         this.reset();
         
       } catch (error) {
-        debugLog('Email sending failed:', {
-          message: error.message,
-          status: error.status,
-          text: error.text
-        });
+        debugLog('Email sending failed:', error);
         
         let errorMessage = 'Email sending failed: ';
         if (error.status === 400) {
-          errorMessage += 'Template error. Please contact support.';
+          errorMessage += 'Template error - Check your EmailJS template variables';
         } else if (error.status === 401) {
-          errorMessage += 'Authentication failed.';
+          errorMessage += 'Authentication failed - Check your public key';
         } else if (error.status === 404) {
-          errorMessage += 'Service configuration error.';
+          errorMessage += 'Service/Template not found - Check your IDs';
         } else if (error.status === 429) {
-          errorMessage += 'Too many requests. Please wait a moment.';
+          errorMessage += 'Rate limit exceeded - Please wait';
         } else {
-          errorMessage += error.message || 'Unknown error occurred.';
+          errorMessage += error.message || 'Unknown error';
         }
         
         showFeedback(errorMessage, 'error');
+        showErrorDetails(`Email Error Details:\nStatus: ${error.status || 'Unknown'}\nMessage: ${error.message || 'Unknown error'}\nText: ${error.text || 'No additional info'}`);
         
       } finally {
         generateBtn.disabled = false;
@@ -880,10 +571,12 @@ for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
     
     // Initialize on page load
     window.addEventListener('load', () => {
-      debugLog('Application started with EmailJS config:', EMAILJS_CONFIG);
+      debugLog('Application started');
+      debugLog('EmailJS Config:', EMAILJS_CONFIG);
       initializeEmailJS();
     });
     
   </script>
 </body>
 </html>
+
