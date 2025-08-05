@@ -5,10 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📧</text></svg>" />
   <title>Code Generator with Email Notification</title>
+  
+  <!-- Prism.js CSS for syntax highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+  
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 800px;
       margin: 40px auto;
       padding: 20px;
       background: #f9f9f9;
@@ -17,27 +23,30 @@
     }
     h2 {
       color: #333;
+      text-align: center;
+      margin-bottom: 30px;
     }
     input, button {
-      padding: 10px;
+      padding: 12px;
       margin: 10px 0;
       width: 100%;
       font-size: 16px;
       box-sizing: border-box;
+      border-radius: 6px;
+      border: 1px solid #ddd;
     }
-    pre {
-      background: #f0f0f0;
-      padding: 10px;
-      border-radius: 5px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
+    input:focus {
+      outline: none;
+      border-color: #007BFF;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
     }
     button {
       background-color: #007BFF;
       color: white;
       border: none;
       cursor: pointer;
-      border-radius: 5px;
+      font-weight: 600;
+      transition: background-color 0.3s;
     }
     button:hover {
       background-color: #0056b3;
@@ -47,10 +56,11 @@
       cursor: not-allowed;
     }
     .feedback {
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 5px;
+      margin: 15px 0;
+      padding: 12px;
+      border-radius: 6px;
       display: none;
+      font-weight: 500;
     }
     .feedback.success {
       background-color: #d4edda;
@@ -67,80 +77,202 @@
       color: #0c5460;
       border: 1px solid #bee5eb;
     }
-    .config-section {
-      background: #fff3cd;
-      border: 1px solid #ffeaa7;
-      padding: 15px;
-      border-radius: 5px;
-      margin-bottom: 20px;
+    .status-section {
+      background: linear-gradient(135deg, #d4edda, #c3e6cb);
+      border: 1px solid #c3e6cb;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      color: #155724;
     }
-    .config-section h3 {
+    .status-section h3 {
       margin-top: 0;
-      color: #856404;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .config-input {
-      margin: 5px 0;
+    .test-button {
+      background-color: #28a745;
+      margin-bottom: 10px;
+    }
+    .test-button:hover {
+      background-color: #218838;
+    }
+    .code-container {
+      margin: 20px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .code-header {
+      background: linear-gradient(135deg, #2d3748, #4a5568);
+      color: white;
+      padding: 12px 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .code-language {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: normal;
+    }
+    .copy-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: auto;
+      margin: 0;
+    }
+    .copy-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .copy-button:active {
+      transform: scale(0.95);
+    }
+    .code-wrapper {
+      position: relative;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    /* Custom Prism styling */
+    .code-wrapper pre {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      background: #2d3748 !important;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .code-wrapper code {
+      font-family: 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+    }
+    /* Line numbers styling */
+    .line-numbers .line-numbers-rows {
+      border-right: 1px solid #4a5568 !important;
+      background: #2d3748 !important;
+    }
+    /* Toolbar styling */
+    .code-toolbar {
+      position: relative;
+    }
+    .code-toolbar > .toolbar {
+      position: absolute;
+      top: 0.3em;
+      right: 0.2em;
+      transition: opacity 0.3s ease-in-out;
+      opacity: 0;
+    }
+    .code-toolbar:hover > .toolbar {
+      opacity: 1;
     }
     .debug-info {
       background: #f8f9fa;
       border: 1px solid #dee2e6;
-      padding: 10px;
-      border-radius: 5px;
-      font-family: monospace;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Monaco', monospace;
       font-size: 12px;
-      max-height: 200px;
+      max-height: 250px;
       overflow-y: auto;
       display: none;
+    }
+    .form-container {
+      background: white;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 25px;
+    }
+    .empty-state {
+      text-align: center;
+      color: #6c757d;
+      font-style: italic;
+      padding: 40px;
+      background: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+    }
+    @media (max-width: 600px) {
+      body {
+        margin: 20px;
+        padding: 15px;
+      }
+      .code-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
 <body>
   <h2>🛠️ Code Generator + Email Notification</h2>
   
-  <!-- Configuration Section -->
-  <div class="config-section">
-    <h3>⚙️ EmailJS Configuration</h3>
-    <p>Enter your EmailJS credentials below:</p>
-    
-    <div class="config-input">
-      <label for="publicKey">Public Key:</label>
-      <input type="text" id="publicKey" placeholder="Your EmailJS Public Key" />
-    </div>
-    
-    <div class="config-input">
-      <label for="serviceId">Service ID:</label>
-      <input type="text" id="serviceId" placeholder="Your EmailJS Service ID" />
-    </div>
-    
-    <div class="config-input">
-      <label for="templateId">Template ID:</label>
-      <input type="text" id="templateId" placeholder="Your EmailJS Template ID" />
-    </div>
-    
-    <button type="button" id="testConfigBtn">Test Configuration</button>
+  <!-- Status Section -->
+  <div class="status-section">
+    <h3>
+      <span>✅ EmailJS Configuration Status</span>
+    </h3>
+    <p><strong>Public Key:</strong> gSzAYtERZ6iPLH_OV</p>
+    <p><strong>Service ID:</strong> service_indlo7r</p>
+    <p><strong>Template ID:</strong> template_2j9tqk7</p>
+    <p id="initStatus">🔄 Initializing EmailJS...</p>
+    <button type="button" id="testEmailBtn" class="test-button">🧪 Test Email Configuration</button>
   </div>
   
-  <form id="codeGeneratorForm">
-    <label for="name">Your Name:</label>
-    <input type="text" id="name" name="name" placeholder="Enter your name" required />
-    
-    <label for="email">Your Email:</label>
-    <input type="email" id="email" name="email" placeholder="Enter your email" required />
-    
-    <button type="submit" id="generateBtn">Generate Code & Send Email</button>
-  </form>
+  <div class="form-container">
+    <form id="codeGeneratorForm">
+      <label for="name">Your Name:</label>
+      <input type="text" id="name" name="name" placeholder="Enter your name" required />
+      
+      <label for="email">Your Email:</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email" required />
+      
+      <button type="submit" id="generateBtn">🚀 Generate Code & Send Email</button>
+    </form>
+  </div>
   
   <div id="feedback" class="feedback"></div>
   
   <h3>📄 Generated Code:</h3>
-  <pre id="output">Your generated code will appear here...</pre>
+  <div id="codeContainer" class="code-container">
+    <div class="empty-state" id="emptyState">
+      <div>🎯 Your beautifully highlighted code will appear here...</div>
+      <div style="margin-top: 10px; font-size: 14px;">Click "Generate Code & Send Email" to get started!</div>
+    </div>
+  </div>
   
   <h3>🐛 Debug Information:</h3>
   <div id="debugInfo" class="debug-info"></div>
   <button type="button" id="toggleDebug">Show Debug Info</button>
 
+  <!-- Prism.js JavaScript for syntax highlighting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+
   <script type="module">
     import emailjs from 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm';
+    
+    // Your EmailJS Configuration - Automatically set
+    const EMAILJS_CONFIG = {
+      publicKey: 'gSzAYtERZ6iPLH_OV',
+      serviceId: 'service_indlo7r',
+      templateId: 'template_2j9tqk7'
+    };
     
     let isEmailJSInitialized = false;
     
@@ -160,15 +292,424 @@
       console.log(message, data);
     }
     
-    // Function to generate random code
+    // Initialize EmailJS on page load
+    async function initializeEmailJS() {
+      try {
+        debugLog('Initializing EmailJS with configuration:', EMAILJS_CONFIG);
+        emailjs.init(EMAILJS_CONFIG.publicKey);
+        isEmailJSInitialized = true;
+        
+        document.getElementById('initStatus').innerHTML = '✅ EmailJS initialized successfully!';
+        debugLog('EmailJS initialized successfully');
+        
+      } catch (error) {
+        debugLog('EmailJS initialization failed:', error);
+        document.getElementById('initStatus').innerHTML = '❌ EmailJS initialization failed';
+      }
+    }
+    
+    // Function to display code with syntax highlighting
+    function displayCode(code, language = 'javascript') {
+      const container = document.getElementById('codeContainer');
+      const emptyState = document.getElementById('emptyState');
+      
+      // Hide empty state
+      if (emptyState) {
+        emptyState.style.display = 'none';
+      }
+      
+      // Create code structure
+      const codeHtml = `
+        <div class="code-header">
+          <div>
+            <span>📄 Generated Code</span>
+            <span class="code-language">${language.toUpperCase()}</span>
+          </div>
+          <button class="copy-button" onclick="copyToClipboard()">📋 Copy</button>
+        </div>
+        <div class="code-wrapper">
+          <pre class="line-numbers"><code class="language-${language}" id="generatedCode">${escapeHtml(code)}</code></pre>
+        </div>
+      `;
+      
+      container.innerHTML = codeHtml;
+      
+      // Apply syntax highlighting
+      Prism.highlightElement(document.getElementById('generatedCode'));
+    }
+    
+    // Function to escape HTML
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    
+    // Copy to clipboard function
+    window.copyToClipboard = function() {
+      const codeElement = document.getElementById('generatedCode');
+      if (codeElement) {
+        const code = codeElement.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+          const copyBtn = document.querySelector('.copy-button');
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = '✅ Copied!';
+          copyBtn.style.background = 'rgba(40, 167, 69, 0.8)';
+          
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy code: ', err);
+        });
+      }
+    };
+    
+    // Enhanced code generation with different languages
     function generateCode() {
-      const codeTypes = [
-        'function generateRandomNumber() {\n  return Math.floor(Math.random() * 100) + 1;\n}',
-        'const colors = ["red", "blue", "green", "yellow"];\nconst randomColor = colors[Math.floor(Math.random() * colors.length)];',
-        'class Calculator {\n  add(a, b) {\n    return a + b;\n  }\n  subtract(a, b) {\n    return a - b;\n  }\n}',
-        'const fetchData = async (url) => {\n  try {\n    const response = await fetch(url);\n    return await response.json();\n  } catch (error) {\n    console.error("Error:", error);\n  }\n};'
+      const codeExamples = [
+        {
+          language: 'javascript',
+          code: `// Random Number Generator with Statistics
+function generateRandomStats() {
+  const numbers = Array.from({length: 10}, () => 
+    Math.floor(Math.random() * 100) + 1
+  );
+  
+  const stats = {
+    numbers: numbers,
+    sum: numbers.reduce((a, b) => a + b, 0),
+    average: numbers.reduce((a, b) => a + b, 0) / numbers.length,
+    min: Math.min(...numbers),
+    max: Math.max(...numbers)
+  };
+  
+  console.log('Generated Numbers:', stats.numbers);
+  console.log('Statistics:', {
+    sum: stats.sum,
+    average: stats.average.toFixed(2),
+    min: stats.min,
+    max: stats.max
+  });
+  
+  return stats;
+}
+
+// Generate and display statistics
+generateRandomStats();`
+        },
+        {
+          language: 'javascript',
+          code: `// Advanced Color Palette Generator
+class ColorPalette {
+  constructor() {
+    this.colors = [];
+  }
+  
+  generateHexColor() {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+  }
+  
+  generateRgbColor() {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    return \`rgb(\${r}, \${g}, \${b})\`;
+  }
+  
+  generatePalette(count = 5) {
+    this.colors = [];
+    for (let i = 0; i < count; i++) {
+      this.colors.push({
+        hex: this.generateHexColor(),
+        rgb: this.generateRgbColor(),
+        name: \`Color \${i + 1}\`
+      });
+    }
+    return this.colors;
+  }
+  
+  displayPalette() {
+    this.colors.forEach((color, index) => {
+      console.log(\`\${color.name}: \${color.hex} | \${color.rgb}\`);
+    });
+  }
+}
+
+// Usage example
+const palette = new ColorPalette();
+palette.generatePalette(5);
+palette.displayPalette();`
+        },
+        {
+          language: 'javascript',
+          code: `// Smart Calculator with History
+class SmartCalculator {
+  constructor() {
+    this.history = [];
+  }
+  
+  calculate(operation, a, b) {
+    let result;
+    const timestamp = new Date().toLocaleString();
+    
+    switch(operation) {
+      case 'add':
+        result = a + b;
+        break;
+      case 'subtract':
+        result = a - b;
+        break;
+      case 'multiply':
+        result = a * b;
+        break;
+      case 'divide':
+        result = b !== 0 ? a / b : 'Error: Division by zero';
+        break;
+      case 'power':
+        result = Math.pow(a, b);
+        break;
+      case 'sqrt':
+        result = Math.sqrt(a);
+        break;
+      default:
+        result = 'Error: Invalid operation';
+    }
+    
+    const calculation = {
+      operation,
+      operands: operation === 'sqrt' ? [a] : [a, b],
+      result,
+      timestamp
+    };
+    
+    this.history.push(calculation);
+    return result;
+  }
+  
+  getHistory() {
+    return this.history;
+  }
+  
+  clearHistory() {
+    this.history = [];
+  }
+}
+
+// Example usage
+const calc = new SmartCalculator();
+console.log('Addition:', calc.calculate('add', 15, 25));
+console.log('Power:', calc.calculate('power', 2, 8));
+console.log('Square Root:', calc.calculate('sqrt', 64));
+console.log('History:', calc.getHistory());`
+        },
+        {
+          language: 'javascript',
+          code: `// Advanced API Data Fetcher with Caching
+class APIManager {
+  constructor() {
+    this.cache = new Map();
+    this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
+  }
+  
+  async fetchWithCache(url) {
+    const now = Date.now();
+    const cached = this.cache.get(url);
+    
+    // Return cached data if still valid
+    if (cached && (now - cached.timestamp) < this.cacheExpiry) {
+      console.log('Returning cached data for:', url);
+      return cached.data;
+    }
+    
+    try {
+      console.log('Fetching fresh data from:', url);
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(\`HTTP error! status: \${response.status}\`);
+      }
+      
+      const data = await response.json();
+      
+      // Cache the result
+      this.cache.set(url, {
+        data,
+        timestamp: now
+      });
+      
+      return data;
+      
+    } catch (error) {
+      console.error('Fetch error:', error.message);
+      
+      // Return cached data even if expired, as fallback
+      if (cached) {
+        console.log('Returning expired cached data as fallback');
+        return cached.data;
+      }
+      
+      throw error;
+    }
+  }
+  
+  clearCache() {
+    this.cache.clear();
+    console.log('Cache cleared');
+  }
+}
+
+// Usage example
+const api = new APIManager();
+api.fetchWithCache('https://api.github.com/users/octocat')
+  .then(data => console.log('User data:', data))
+  .catch(error => console.error('Failed to fetch:', error));`
+        },
+        {
+          language: 'typescript',
+          code: `// TypeScript Interface Example with Generic Types
+interface User<T = any> {
+  id: number;
+  name: string;
+  email: string;
+  metadata?: T;
+  createdAt: Date;
+}
+
+interface ApiResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+class UserManager<T = any> {
+  private users: User<T>[] = [];
+  
+  addUser(userData: Omit<User<T>, 'id' | 'createdAt'>): User<T> {
+    const newUser: User<T> = {
+      id: this.users.length + 1,
+      createdAt: new Date(),
+      ...userData
+    };
+    
+    this.users.push(newUser);
+    return newUser;
+  }
+  
+  getUserById(id: number): User<T> | undefined {
+    return this.users.find(user => user.id === id);
+  }
+  
+  getUsers(page: number = 1, limit: number = 10): ApiResponse<User<T>> {
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedUsers = this.users.slice(startIndex, endIndex);
+    
+    return {
+      data: paginatedUsers,
+      total: this.users.length,
+      page,
+      hasMore: endIndex < this.users.length
+    };
+  }
+}
+
+// Usage example
+const userManager = new UserManager<{role: string, preferences: any}>();
+
+userManager.addUser({
+  name: 'Alice Johnson',
+  email: 'alice@example.com',
+  metadata: {
+    role: 'admin',
+    preferences: { theme: 'dark', notifications: true }
+  }
+});
+
+console.log('Users:', userManager.getUsers(1, 5));`
+        },
+        {
+          language: 'python',
+          code: `# Python Data Analysis Example
+import random
+from datetime import datetime, timedelta
+from typing import List, Dict, Any
+
+class DataAnalyzer:
+    def __init__(self):
+        self.data = []
+    
+    def generate_sample_data(self, count: int = 100) -> List[Dict[str, Any]]:
+        """Generate sample data for analysis"""
+        categories = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports']
+        
+        for i in range(count):
+            self.data.append({
+                'id': i + 1,
+                'category': random.choice(categories),
+                'price': round(random.uniform(10, 500), 2),
+                'quantity': random.randint(1, 10),
+                'date': datetime.now() - timedelta(days=random.randint(0, 365))
+            })
+        
+        return self.data
+    
+    def analyze_by_category(self) -> Dict[str, Dict[str, float]]:
+        """Analyze data by category"""
+        analysis = {}
+        
+        for item in self.data:
+            category = item['category']
+            if category not in analysis:
+                analysis[category] = {
+                    'total_revenue': 0,
+                    'total_items': 0,
+                    'avg_price': 0
+                }
+            
+            analysis[category]['total_revenue'] += item['price'] * item['quantity']
+            analysis[category]['total_items'] += item['quantity']
+        
+        # Calculate average prices
+        for category in analysis:
+            total_revenue = analysis[category]['total_revenue']
+            total_items = analysis[category]['total_items']
+            analysis[category]['avg_price'] = round(total_revenue / total_items, 2)
+        
+        return analysis
+    
+    def get_top_categories(self, limit: int = 3) -> List[tuple]:
+        """Get top performing categories by revenue"""
+        analysis = self.analyze_by_category()
+        sorted_categories = sorted(
+            analysis.items(),
+            key=lambda x: x[1]['total_revenue'],
+            reverse=True
+        )
+        return sorted_categories[:limit]
+
+# Example usage
+analyzer = DataAnalyzer()
+analyzer.generate_sample_data(50)
+
+print("Category Analysis:")
+for category, stats in analyzer.analyze_by_category().items():
+    print(f"{category}: Revenue=${stats['total_revenue']:.2f}, "
+          f"Items={stats['total_items']}, Avg Price=${stats['avg_price']}")
+
+print("\\nTop 3 Categories:")
+for i, (category, stats) in enumerate(analyzer.get_top_categories(), 1):
+    print(f"{i}. {category}: ${stats['total_revenue']:.2f}")`
+        }
       ];
-      return codeTypes[Math.floor(Math.random() * codeTypes.length)];
+      
+      const randomExample = codeExamples[Math.floor(Math.random() * codeExamples.length)];
+      return randomExample;
     }
     
     // Function to show feedback
@@ -183,63 +724,63 @@
       }, 5000);
     }
     
-    // Test EmailJS configuration
-    document.getElementById('testConfigBtn').addEventListener('click', async function() {
-      const publicKey = document.getElementById('publicKey').value.trim();
-      const serviceId = document.getElementById('serviceId').value.trim();
-      const templateId = document.getElementById('templateId').value.trim();
+    // Test email configuration
+    document.getElementById('testEmailBtn').addEventListener('click', async function() {
+      const button = this;
+      const originalText = button.textContent;
       
-      if (!publicKey || !serviceId || !templateId) {
-        showFeedback('Please fill in all EmailJS configuration fields.', 'error');
-        return;
-      }
+      button.disabled = true;
+      button.textContent = '🔄 Testing...';
       
       try {
         debugLog('Testing EmailJS configuration...');
-        debugLog('Public Key:', publicKey);
-        debugLog('Service ID:', serviceId);
-        debugLog('Template ID:', templateId);
         
-        // Initialize EmailJS
-        emailjs.init(publicKey);
-        isEmailJSInitialized = true;
-        debugLog('EmailJS initialized successfully');
+        if (!isEmailJSInitialized) {
+          await initializeEmailJS();
+        }
         
-        // Test with minimal template parameters
         const testParams = {
           to_name: 'Test User',
           to_email: 'test@example.com',
-          generated_code: 'console.log("Hello World!");',
+          generated_code: 'console.log("Hello World! This is a test.");',
           from_name: 'Code Generator App',
-          message: 'This is a test email from your code generator.'
+          user_message: 'This is a test email to verify EmailJS configuration.'
         };
         
         debugLog('Sending test email with parameters:', testParams);
         
-        const response = await emailjs.send(serviceId, templateId, testParams);
+        const response = await emailjs.send(
+          EMAILJS_CONFIG.serviceId, 
+          EMAILJS_CONFIG.templateId, 
+          testParams
+        );
         
-        debugLog('EmailJS Response:', response);
-        showFeedback('✅ Configuration test successful! EmailJS is working.', 'success');
+        debugLog('Test email sent successfully:', response);
+        showFeedback('✅ Test email sent successfully! Check your email template configuration.', 'success');
         
       } catch (error) {
-        debugLog('EmailJS Error:', {
+        debugLog('Test email failed:', {
           message: error.message,
           status: error.status,
           text: error.text
         });
         
-        let errorMessage = 'Configuration test failed: ';
+        let errorMessage = 'Test failed: ';
         if (error.status === 400) {
-          errorMessage += 'Bad Request - Check your Service ID and Template ID';
+          errorMessage += 'Template variables mismatch. Check your EmailJS template.';
         } else if (error.status === 401) {
-          errorMessage += 'Unauthorized - Check your Public Key';
+          errorMessage += 'Invalid public key.';
         } else if (error.status === 404) {
-          errorMessage += 'Not Found - Service or Template ID not found';
+          errorMessage += 'Service or template not found.';
         } else {
           errorMessage += error.message || 'Unknown error';
         }
         
         showFeedback(errorMessage, 'error');
+        
+      } finally {
+        button.disabled = false;
+        button.textContent = originalText;
       }
     });
     
@@ -249,9 +790,6 @@
       
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
-      const publicKey = document.getElementById('publicKey').value.trim();
-      const serviceId = document.getElementById('serviceId').value.trim();
-      const templateId = document.getElementById('templateId').value.trim();
       const generateBtn = document.getElementById('generateBtn');
       
       if (!name || !email) {
@@ -259,44 +797,44 @@
         return;
       }
       
-      if (!publicKey || !serviceId || !templateId) {
-        showFeedback('Please configure EmailJS settings first.', 'error');
+      if (!isEmailJSInitialized) {
+        showFeedback('EmailJS not initialized. Please wait and try again.', 'error');
         return;
       }
       
       // Generate code
-      const generatedCode = generateCode();
-      document.getElementById('output').textContent = generatedCode;
+      const codeExample = generateCode();
+      displayCode(codeExample.code, codeExample.language);
       
       // Disable button and show loading state
       generateBtn.disabled = true;
-      generateBtn.textContent = 'Sending Email...';
+      generateBtn.textContent = '📤 Sending Email...';
       showFeedback('Generating code and sending email...', 'info');
       
       try {
-        debugLog('Starting email send process...');
-        
-        // Initialize EmailJS if not already done
-        if (!isEmailJSInitialized) {
-          emailjs.init(publicKey);
-          isEmailJSInitialized = true;
-          debugLog('EmailJS initialized');
-        }
+        debugLog('Starting email send process for user:', { name, email });
         
         const emailParams = {
           to_name: name,
           to_email: email,
-          generated_code: generatedCode,
+          generated_code: codeExample.code,
           from_name: 'Code Generator App',
-          message: `Hello ${name}! Here's your generated code.`
+          user_message: `Hello ${name}! Here's your freshly generated ${codeExample.language.toUpperCase()} code. Happy coding! 🚀`
         };
         
         debugLog('Sending email with parameters:', emailParams);
         
-        const response = await emailjs.send(serviceId, templateId, emailParams);
+        const response = await emailjs.send(
+          EMAILJS_CONFIG.serviceId, 
+          EMAILJS_CONFIG.templateId, 
+          emailParams
+        );
         
         debugLog('Email sent successfully:', response);
-        showFeedback('✅ Success! Code generated and email sent.', 'success');
+        showFeedback(`✅ Success! Code generated and email sent to ${email}`, 'success');
+        
+        // Reset form
+        this.reset();
         
       } catch (error) {
         debugLog('Email sending failed:', {
@@ -307,22 +845,22 @@
         
         let errorMessage = 'Email sending failed: ';
         if (error.status === 400) {
-          errorMessage += 'Template variables mismatch or invalid data';
+          errorMessage += 'Template error. Please contact support.';
         } else if (error.status === 401) {
-          errorMessage += 'Invalid credentials';
+          errorMessage += 'Authentication failed.';
         } else if (error.status === 404) {
-          errorMessage += 'Service or template not found';
+          errorMessage += 'Service configuration error.';
         } else if (error.status === 429) {
-          errorMessage += 'Rate limit exceeded';
+          errorMessage += 'Too many requests. Please wait a moment.';
         } else {
-          errorMessage += error.message || 'Unknown error';
+          errorMessage += error.message || 'Unknown error occurred.';
         }
         
         showFeedback(errorMessage, 'error');
         
       } finally {
         generateBtn.disabled = false;
-        generateBtn.textContent = 'Generate Code & Send Email';
+        generateBtn.textContent = '🚀 Generate Code & Send Email';
       }
     });
     
@@ -340,8 +878,12 @@
       }
     });
     
-    // Initialize debug log
-    debugLog('Application started');
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      debugLog('Application started with EmailJS config:', EMAILJS_CONFIG);
+      initializeEmailJS();
+    });
+    
   </script>
 </body>
 </html>
